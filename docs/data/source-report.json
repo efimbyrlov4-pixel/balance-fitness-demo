@@ -1,0 +1,18 @@
+{
+  "retrievedAt": "2026-10-06",
+  "origin": "https://balance-fit.ru/",
+  "sitemapPages": 66,
+  "downloadedPages": 66,
+  "uniqueOriginalAssets": 500,
+  "photoCandidates": 361,
+  "assetBytes": 134565046,
+  "failedPages": [],
+  "failedAssets": [],
+  "limitations": [
+    "Inventory covers all 66 current sitemap pages; externally hosted interactive schedules, personal accounts and third-party document links are preserved as links and not mirrored.",
+    "Raw text includes all embedded popups, shared navigation and footer text. primaryText/cleanText removes shared Tilda content and forms. 47 deduplicated popup articles are stored in shared-articles.json.",
+    "Photo identification is based on dimensions and filename exclusions; some banners, awards and card graphics are included in the photo candidates.",
+    "Content and assets from dynamically loaded feed APIs are not included unless present in page HTML.",
+    "Source site contains some contradictory contact and opening-hour values; use verified contacts section and original links for current operational information."
+  ]
+}
