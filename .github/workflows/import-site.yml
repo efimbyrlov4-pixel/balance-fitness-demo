@@ -1,0 +1,71 @@
+name: Import Balance website
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/import-site.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy the complete published demo into this repository
+        shell: python
+        run: |
+          import json, pathlib, urllib.request, time
+          from concurrent.futures import ThreadPoolExecutor
+          base = 'https://balance-fitness-redesign.jaidenwintershfru.chatgpt.site/'
+          root = pathlib.Path('docs')
+          def download(name):
+              path = pathlib.PurePosixPath(name)
+              if path.is_absolute() or '..' in path.parts:
+                  raise ValueError('Invalid asset path')
+              for attempt in range(4):
+                  try:
+                      request = urllib.request.Request(base + name, headers={'User-Agent':'Balance-demo-migration/1.0'})
+                      with urllib.request.urlopen(request, timeout=60) as response:
+                          body = response.read()
+                      target = root / path
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      target.write_bytes(body)
+                      return
+                  except Exception:
+                      if attempt == 3: raise
+                      time.sleep(2 ** attempt)
+          files = ['index.html','app.js','style.css','favicon.svg',
+                   'data/content.json','data/images.json','data/shared-articles.json','data/source-report.json',
+                   'assets/hero-cardio.png','assets/hero-strength.png','assets/swimming.jpg',
+                   'assets/group.jpg','assets/kids.jpg','assets/logo.png']
+          for name in files: download(name)
+          images = json.loads((root / 'data/images.json').read_text())
+          with ThreadPoolExecutor(max_workers=8) as pool:
+              list(pool.map(download, sorted({item['localPath'] for item in images})))
+          (root / '.nojekyll').touch()
+          pathlib.Path('README.md').write_text('''# Balance — демонстрационный редизайн
+
+          **[Открыть макет сайта](https://efimbyrlov4-pixel.github.io/balance-fitness-demo/)**
+
+          Адаптивный макет с интерактивными плитками, выбором трёх клубов, каталогом материалов и фотогалереей.
+          Материалы 66 страниц и 500 оригинальных изображений с balance-fit.ru сохранены в docs.
+          Фото и материалы принадлежат Balance. Это неофициальная демонстрация дизайна.
+          Запись, личный кабинет и актуальное расписание открываются на официальном сайте.
+
+          ## Структура
+          - docs/index.html — главная страница
+          - docs/style.css — оформление и мобильная версия
+          - docs/app.js — интерактивные разделы
+          - docs/data — исходные материалы и каталог изображений
+          - docs/assets — оригинальные фотографии и графика
+
+          GitHub Pages публикует каталог docs ветки main. Сайт работает самостоятельно, без зависимости от предыдущего хостинга.
+          ''', encoding='utf-8')
+          print(f'Saved {len(images)} original assets and all website files')
+      - name: Save website source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs README.md
+          git diff --cached --quiet || git commit -m "Add complete Balance demo with original photographs"
+          git push
